@@ -1,4 +1,4 @@
-package com.devsanmiaderibigbe.evilinsults
+package com.devsanmiaderibigbe.evilinsults.utils
 
 import io.reactivex.Scheduler
 import io.reactivex.android.schedulers.AndroidSchedulers

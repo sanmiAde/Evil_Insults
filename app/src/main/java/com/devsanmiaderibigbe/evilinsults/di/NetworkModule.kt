@@ -1,14 +1,16 @@
 package com.devsanmiaderibigbe.evilinsults.di
 
 import android.app.Application
-import com.devsanmiaderibigbe.evilinsults.AppConstants
-import com.devsanmiaderibigbe.evilinsults.AppScheduler
+import com.devsanmiaderibigbe.evilinsults.utils.AppConstants
+import com.devsanmiaderibigbe.evilinsults.utils.AppScheduler
+import com.devsanmiaderibigbe.evilinsults.di.scope.ApplicationScope
+import com.devsanmiaderibigbe.evilinsults.remote.EvilInsultService
+import com.devsanmiaderibigbe.evilinsults.remote.Repository
+import com.devsanmiaderibigbe.evilinsults.remote.RepositoryImp
 import com.squareup.moshi.Moshi
 import dagger.Binds
-import dagger.BindsInstance
 import dagger.Module
 import dagger.Provides
-import io.reactivex.schedulers.Schedulers
 import okhttp3.Cache
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -16,20 +18,19 @@ import retrofit2.Retrofit
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
 import retrofit2.converter.moshi.MoshiConverterFactory
 import java.util.concurrent.TimeUnit
-import javax.inject.Singleton
 
 @Module
 class NetworkModule {
 
     @Provides
-    @Singleton
+    @ApplicationScope
     internal fun provideOkHttpChace(application: Application): Cache {
         val cacheSize = 10 * 1024 * 1024
         return Cache(application.cacheDir, cacheSize.toLong())
     }
 
     @Provides
-    @Singleton
+    @ApplicationScope
     internal fun provideHttpLoggingInterceptor(): HttpLoggingInterceptor {
         val loggingInterceptor = HttpLoggingInterceptor()
         loggingInterceptor.level = HttpLoggingInterceptor.Level.BODY
@@ -37,13 +38,13 @@ class NetworkModule {
     }
 
     @Provides
-    @Singleton
+    @ApplicationScope
     internal fun providesMoshi(): Moshi {
         return Moshi.Builder().build()
     }
 
     @Provides
-    @Singleton
+    @ApplicationScope
     internal fun provideOkHttpClient(
         cache: Cache,
         httpLoggingInterceptor: HttpLoggingInterceptor
@@ -57,19 +58,30 @@ class NetworkModule {
     }
 
     @Provides
-    @Singleton
+    @ApplicationScope
     internal fun provideRetrofit(moshi: Moshi, okHttpClient: OkHttpClient, appScheduler: AppScheduler): Retrofit {
         return Retrofit.Builder()
             .addConverterFactory(MoshiConverterFactory.create(moshi))
-            .addCallAdapterFactory(RxJava2CallAdapterFactory    .createWithScheduler(appScheduler.io()))
+            .addCallAdapterFactory(RxJava2CallAdapterFactory.createWithScheduler(appScheduler.io()))
             .baseUrl(AppConstants.API_BASE_URL)
             .client(okHttpClient)
             .build()
     }
 
     @Provides
-    @Singleton
+    @ApplicationScope
+    fun providesEvilInsultService(retrofit: Retrofit) : EvilInsultService = retrofit.create(EvilInsultService::class.java)
+
+
+    @ApplicationScope
+    @Provides
+    fun providesRepository( evilInsultService: EvilInsultService) : Repository{
+        return RepositoryImp(evilInsultService)
+    }
+
+    @Provides
+    @ApplicationScope
     fun appScheduler() : AppScheduler {
-        return  AppScheduler()
+        return AppScheduler()
     }
 }
