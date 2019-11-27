@@ -2,7 +2,11 @@ package com.devsanmiaderibigbe.evilinsults.ui
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.View
+import android.widget.Toast
 import androidx.lifecycle.Observer
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.devsanmiaderibigbe.evilinsults.MyApplication
 import com.devsanmiaderibigbe.evilinsults.R
 import com.devsanmiaderibigbe.evilinsults.di.component.HomeComponent
@@ -22,7 +26,9 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        initClickListners()
+        //initClickListners()
+       val adapter =  initRecyclerView()
+        observeAsoebiStyeList(adapter)
 
     }
 
@@ -31,18 +37,45 @@ class MainActivity : AppCompatActivity() {
         homeComponent.inject(this)
     }
 
-    private fun initClickListners(){
-        btn_get_insult.setOnClickListener {
-            viewModel.getInsult()
-            viewModel.evilInsultResult.observe(this, Observer {
-                when(it.status){
-                    Status.SUCCESS -> {
-                        txt_insult.text = it.data?.insult
-                    }
-                    Status.ERROR -> txt_insult.text = it.message
-                    Status.LOADING -> {}
-                }
-            })
-        }
+//    private fun initClickListners(){
+//        btn_get_insult.setOnClickListener {
+//            viewModel.getInsult()
+//            viewModel.evilInsultResult.observe(this, Observer {
+//                when(it.status){
+//                    Status.SUCCESS -> {
+//                        txt_insult.text = it.data?.insult
+//                    }
+//                    Status.ERROR -> txt_insult.text = it.message
+//                    Status.LOADING -> {}
+//                }
+//            })
+//        }
+//    }
+
+    private fun initRecyclerView(): AsoebiStylesAdapter {
+        val adapter = AsoebiStylesAdapter(this)
+        val recyclerView = findViewById<RecyclerView>(R.id.rv_asoebi_style)
+        recyclerView.layoutManager = LinearLayoutManager(this)
+        recyclerView.adapter = adapter
+
+        return adapter
     }
+
+
+    private fun observeAsoebiStyeList(adapter: AsoebiStylesAdapter) {
+        viewModel.asoebiStylesResult.observe(this, Observer {
+            when(it.status){
+                Status.SUCCESS -> {
+                    adapter.setAsoebiList(it.data?.data!!)
+                    val siz : Int = it?.data?.data!!.size
+                    Toast.makeText(this, "${siz}", Toast.LENGTH_SHORT).show()
+                }
+                Status.ERROR ->{
+                    Toast.makeText(this, "${it.message}", Toast.LENGTH_SHORT).show()
+                }
+                Status.LOADING ->{}
+            }
+        })
+    }
+
 }
